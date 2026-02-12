@@ -2,7 +2,6 @@ package com.smartsite.planing.service;
 
 import java.util.List;
 
-import org.apache.kafka.streams.processor.assignment.KafkaStreamsAssignment.AssignedTask;
 import org.springframework.stereotype.Service;
 
 import com.smartsite.planing.domain.entity.Task;
