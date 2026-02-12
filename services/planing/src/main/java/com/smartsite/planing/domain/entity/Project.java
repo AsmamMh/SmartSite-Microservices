@@ -1,4 +1,4 @@
-package com.smartsite.planing.entity;
+package com.smartsite.planing.domain.entity;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -57,6 +57,6 @@ public class Project {
     @OneToMany(mappedBy = "project")
     private List<Task> tasks = new ArrayList<>();
 
-        
+
     
 }

@@ -1,9 +1,11 @@
-package com.smartsite.planing.entity;
+package com.smartsite.planing.domain.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import org.hibernate.annotations.ManyToAny;
+
+import com.smartsite.planing.domain.enums.AssignedStatus;
 
 import jakarta.annotation.Generated;
 import jakarta.persistence.Column;

@@ -1,4 +1,4 @@
-package com.smartsite.planing.entity;
+package com.smartsite.planing.domain.entity;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.smartsite.planing.domain.enums.TaskSTatus;
 
 import jakarta.persistence.CascadeType;
 
