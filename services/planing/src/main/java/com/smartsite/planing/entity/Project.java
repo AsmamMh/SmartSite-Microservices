@@ -45,7 +45,7 @@ public class Project {
     private LocalDate actualStart;
     private LocalDate acctualEnd;
 
-    private Duration esimatedDuration;
+    
     private BigDecimal estimateBudget;
     private BigDecimal actualBudget;
 
