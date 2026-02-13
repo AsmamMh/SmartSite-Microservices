@@ -5,10 +5,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.smartsite.planing.domain.entity.Task;
 import com.smartsite.planing.domain.entity.TaskAssigne;
+import com.smartsite.planing.rabbitmq.RabbitMQConfig;
 import com.smartsite.planing.service.ITaskAssigne;
 
 import lombok.NoArgsConstructor;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +26,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/api/taskassigne")
 @CrossOrigin(origins = "*")
 public class TaskAssignController {
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    public void sendMessage(String message) {
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "routing.key", message);
+    }
     private final ITaskAssigne taskAssigneService;
     public TaskAssignController(ITaskAssigne taskAssigneService) {
         this.taskAssigneService = taskAssigneService;
@@ -30,6 +39,8 @@ public class TaskAssignController {
 
     @PostMapping("/{taskId}")
     public ResponseEntity<TaskAssigne> postTaskAssign(@RequestBody TaskAssigne taskAssigne,@PathVariable Long taskId) {
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "task.assigned", taskId);
+        sendMessage("Task assigned: " + taskAssigne.getWorkerId() + " to task " + taskId);
         return ResponseEntity.ok(this.taskAssigneService.create(taskId, taskAssigne));
     }
 
