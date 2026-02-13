@@ -1,5 +1,7 @@
 package com.smartsite.planing.Controllers;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,11 +13,12 @@ import com.smartsite.planing.service.IResourceNeed;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 @RestController
 @RequestMapping("/api/resource")
-
 public class ResourceNeedController {
     
     private  IResourceNeed resourceNeedService;
@@ -37,7 +40,9 @@ public class ResourceNeedController {
     public ResponseEntity<ResourceNeed> getResourceNeedById(@PathVariable Long resourceId) {
         return ResponseEntity.ok(this.resourceNeedService.getById(resourceId));
     }
-    
-    
 
+    @GetMapping("/task/{taskId}")
+    public ResponseEntity<List<ResourceNeed>> getResourceByTask(@PathVariable Long taskId) {
+        return ResponseEntity.ok(this.resourceNeedService.getByTask(taskId));
+    }
 }
