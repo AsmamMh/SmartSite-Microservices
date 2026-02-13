@@ -1,5 +1,7 @@
 package com.smartsite.notification.notification;
 
+import java.util.Date;
+
 import jakarta.annotation.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -21,7 +23,7 @@ public class Notification {
  private Long id;
  private String NotificationType;
  private String Message;
- private String ReceivedDate;
- private String Receiver;
+ private Date ReceivedDate;
+ private Long Receiver;
  
 }
