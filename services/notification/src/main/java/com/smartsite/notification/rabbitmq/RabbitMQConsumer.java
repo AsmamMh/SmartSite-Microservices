@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 public class RabbitMQConsumer {
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_NAME)
-    public void listen(String message) {
+    public void listen(Object message) {
         System.out.println("Received message: " + message);
     }
 }
