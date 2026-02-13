@@ -25,5 +25,5 @@ public class Notification {
  private String Message;
  private Date ReceivedDate;
  private Long Receiver;
- 
+ private boolean isRead;
 }
