@@ -22,7 +22,8 @@ public class Notification {
  @GeneratedValue(strategy = GenerationType.IDENTITY)
  private Long id;
  private String NotificationType;
- private String Message;
+ private String Title;
+ private String Description;
  private Date ReceivedDate;
  private Long Receiver;
  private boolean isRead;
