@@ -39,9 +39,10 @@ public class TaskAssignController {
 
     @PostMapping("/{taskId}")
     public ResponseEntity<TaskAssigne> postTaskAssign(@RequestBody TaskAssigne taskAssigne,@PathVariable Long taskId) {
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "task.assigned", taskId);
-        sendMessage("Task assigned: " + taskAssigne.getWorkerId() + " to task " + taskId);
-        return ResponseEntity.ok(this.taskAssigneService.create(taskId, taskAssigne));
+        TaskAssigne taskAssigne2= this.taskAssigneService.create(taskId, taskAssigne);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "routing.key", taskAssigne2);
+        //sendMessage("Task assigned: " + taskAssigne.getWorkerId() + " to task " + taskId);
+        return ResponseEntity.ok(taskAssigne2);
     }
 
     @GetMapping("/{taskid}")
