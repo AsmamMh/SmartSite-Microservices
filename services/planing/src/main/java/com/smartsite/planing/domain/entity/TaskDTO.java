@@ -58,14 +58,9 @@ public class TaskDTO {
     private BigDecimal progress = BigDecimal.ZERO;
     private String description;
 
-   
-    private Set<Task> predecessors = new HashSet<>();
-    
-    private List<ResourceNeed> ressources = new ArrayList<>();
-
-    
-    private List<TaskAssigne> assignments = new ArrayList<>();
-
+    private Set<Task> predecessors ;   
+    private List<Long> ressources ;
+    private List<Long> assignments ;
 
     private Project project;
 }
