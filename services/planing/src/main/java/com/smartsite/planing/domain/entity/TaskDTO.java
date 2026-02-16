@@ -39,27 +39,21 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TaskDTO {
-    @Id
+
     private Long id;
-
     private String title;
-
     private Duration esimatedDuration;
-
     private LocalDateTime plannedStart;
     private LocalDateTime plannedEnd;
     private LocalDateTime actualStart;
     private LocalDateTime actualEnd;
-
     private Duration estimatedDuration;
-
     private TaskSTatus status ;
     private BigDecimal progress ;
     private String description;
 
-    private Set<Task> predecessors ;   
-    private List<Long> ressources ;
-    private List<Long> assignments ;
-
-    private Project project;
+    private List<Long> predecessorsId ;   
+    private List<Long> ressourcesId ;
+    private List<Long> assignmentsId ;
+    private Long projectId;
 }
