@@ -41,10 +41,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class TaskDTO {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String title;
 
     private Duration esimatedDuration;
@@ -56,23 +54,19 @@ public class TaskDTO {
 
     private Duration estimatedDuration;
 
-    @Enumerated(EnumType.STRING)
+    
     private TaskSTatus status = TaskSTatus.PLANNED;
     private BigDecimal progress = BigDecimal.ZERO;
     private String description;
 
-    @JsonIgnore
-    @ManyToMany
-    @JoinTable(name = "task_dependencies", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "predecessor_id"))
+   
     private Set<Task> predecessors = new HashSet<>();
-    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    
     private List<ResourceNeed> ressources = new ArrayList<>();
 
-    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    
     private List<TaskAssigne> assignments = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
-    @JsonIgnore
+
     private Project project;
 }
