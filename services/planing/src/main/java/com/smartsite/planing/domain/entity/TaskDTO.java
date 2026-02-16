@@ -53,9 +53,8 @@ public class TaskDTO {
 
     private Duration estimatedDuration;
 
-    
-    private TaskSTatus status = TaskSTatus.PLANNED;
-    private BigDecimal progress = BigDecimal.ZERO;
+    private TaskSTatus status ;
+    private BigDecimal progress ;
     private String description;
 
     private Set<Task> predecessors ;   
