@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=planing'
+      - 'POSTGRES_PASSWORD=chedly'
+      - 'POSTGRES_USER=chedly'
+    ports:
+      - '5432'
+  rabbit-mq:
+    image: rabbitmq:4-management
+    container_name: rabbitmq
+    restart: always 
+    ports: 
+      - "5672:5672" # protocol
+      - "15672:15672" # UI
+    environment:
+      RABBITMQ_DEFAULT_USER: chedly
+      RABBITMQ_DEFAULT_PASS: chedly 
+    volumes:
+      - rabbitmq-lib:/var/lib/rabbitmq
+      - rabbitmq-log:/var/log/rabbitmq
+volumes:
+    rabbitmq-lib:
+      driver: local
+    rabbitmq-log:
+      driver: local
