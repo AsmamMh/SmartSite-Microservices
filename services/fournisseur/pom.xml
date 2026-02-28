@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>tn.esprit</groupId>
-	<artifactId>fournisseurs</artifactId>
+	<artifactId>service-fournisseurs</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>fournisseurs</name>
-	<description>fournisseurs</description>
+	<name>service-fournisseurs</name>
+	<description>Service Gestion Fournisseurs</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -38,6 +38,10 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
