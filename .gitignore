@@ -1,33 +1,27 @@
-HELP.md
+﻿# Dependencies
+node_modules/
+frontend/node_modules/
+**/node_modules/
+
+# Build outputs
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+dist/
+*.jar
+*.war
 
-### VS Code ###
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
 .vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

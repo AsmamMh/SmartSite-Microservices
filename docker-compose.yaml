@@ -1,27 +1,359 @@
 services:
-  postgres:
-    image: 'postgres:latest'
+  # Infrastructure Services
+  mysql:
+    image: "mysql:latest"
+    container_name: mysql-container
     environment:
-      - 'POSTGRES_DB=planing'
-      - 'POSTGRES_PASSWORD=chedly'
-      - 'POSTGRES_USER=chedly'
+      - "MYSQL_ROOT_PASSWORD=chedly"
+      - "MYSQL_DATABASE=chedlyRebai4twin5_db"
+      - "MYSQL_USER=chedly"
+      - "MYSQL_PASSWORD=chedly"
     ports:
-      - '5432'
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - smartsite-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    restart: unless-stopped
+
   rabbit-mq:
     image: rabbitmq:4-management
     container_name: rabbitmq
-    restart: always 
-    ports: 
-      - "5672:5672" # protocol
-      - "15672:15672" # UI
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: chedly
-      RABBITMQ_DEFAULT_PASS: chedly 
+      RABBITMQ_DEFAULT_PASS: chedly
     volumes:
       - rabbitmq-lib:/var/lib/rabbitmq
       - rabbitmq-log:/var/log/rabbitmq
+    networks:
+      - smartsite-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      timeout: 20s
+      retries: 5
+    restart: unless-stopped
+
+  # Config Server (Centralized Configuration)
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=native
+      - EUREKA_CLIENT_ENABLED=false
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+    volumes:
+      - C:/Users/gigabyte g5/config-repo:/config-repo
+    networks:
+      - smartsite-network
+    depends_on:
+      - mysql
+      - rabbit-mq
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Eureka Server (Service Discovery)
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Microservices
+  service-materiau:
+    build:
+      context: ./service-materiau
+      dockerfile: Dockerfile
+    container_name: service-materiau
+    ports:
+      - "8086:8086"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    restart: unless-stopped
+
+  service-projet:
+    build:
+      context: ./service-projet
+      dockerfile: Dockerfile
+    container_name: service-gestion-projet
+    ports:
+      - "8083:8083"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_APPLICATION_NAME=service-gestion-projet
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/chedlyRebai4twin5_db
+      - SPRING_DATASOURCE_USERNAME=chedly
+      - SPRING_DATASOURCE_PASSWORD=chedly
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
+    restart: unless-stopped
+
+  service-user:
+    build:
+      context: ./service-user
+      dockerfile: Dockerfile
+    container_name: service-gestion-user
+    ports:
+      - "8082:8082"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_APPLICATION_NAME=service-gestion-user
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/chedlyRebai4twin5_db
+      - SPRING_DATASOURCE_USERNAME=chedly
+      - SPRING_DATASOURCE_PASSWORD=chedly
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
+    restart: unless-stopped
+
+  chantier:
+    build:
+      context: ./chantier
+      dockerfile: Dockerfile
+    container_name: service-gestion-chantier
+    ports:
+      - "8089:8089"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_APPLICATION_NAME=service-gestion-chantier
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/chedlyRebai4twin5_db
+      - SPRING_DATASOURCE_USERNAME=chedly
+      - SPRING_DATASOURCE_PASSWORD=chedly
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
+    restart: unless-stopped
+
+  incident:
+    build:
+      context: ./incident
+      dockerfile: Dockerfile
+    container_name: service-gestion-incidents
+    ports:
+      - "30332:30332"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_APPLICATION_NAME=service-gestion-incidents
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    restart: unless-stopped
+
+  # Service Fournisseurs
+  fournisseurs:
+    build:
+      context: ./services/fournisseurs
+      dockerfile: Dockerfile
+    container_name: service-fournisseurs
+    ports:
+      - "8087:8087"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_APPLICATION_NAME=service-fournisseurs
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/chedlyRebai4twin5_db
+      - SPRING_DATASOURCE_USERNAME=chedly
+      - SPRING_DATASOURCE_PASSWORD=chedly
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
+    restart: unless-stopped
+
+  # Service Notification
+  notification:
+    build:
+      context: ./services/notification
+      dockerfile: Dockerfile
+    container_name: service-notification
+    ports:
+      - "9997:9997"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      rabbit-mq:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_APPLICATION_NAME=service-notification
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_RABBITMQ_HOST=rabbit-mq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=chedly
+      - SPRING_RABBITMQ_PASSWORD=chedly
+    restart: unless-stopped
+
+  # Service Planning
+  planning:
+    build:
+      context: ./services/planing
+      dockerfile: Dockerfile
+    container_name: service-planning
+    ports:
+      - "8084:8084"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_APPLICATION_NAME=service-planning
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/chedlyRebai4twin5_db
+      - SPRING_DATASOURCE_USERNAME=chedly
+      - SPRING_DATASOURCE_PASSWORD=chedly
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQL8Dialect
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8070:8070"
+    networks:
+      - smartsite-network
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=default
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    restart: unless-stopped
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:80"  # Nginx sert sur le port 80 dans le conteneur
+    networks:
+      - smartsite-network
+    depends_on:
+      - api-gateway
+    environment:
+      - REACT_APP_API_URL=http://api-gateway:8070
+    restart: unless-stopped
+
 volumes:
-    rabbitmq-lib:
-      driver: local
-    rabbitmq-log:
-      driver: local
+  rabbitmq-lib:
+    driver: local
+  rabbitmq-log:
+    driver: local
+  mysql-data:
+    driver: local
+
+networks:
+  smartsite-network:
+    driver: bridge

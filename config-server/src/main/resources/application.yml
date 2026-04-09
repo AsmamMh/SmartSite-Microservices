@@ -1,0 +1,20 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: file:/config-repo
+  profiles:
+    active: native
+
+# Désactiver complètement Eureka
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false

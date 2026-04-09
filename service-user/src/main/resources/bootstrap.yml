@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: service-gestion-user
+  cloud:
+    config:
+      uri: http://config-server:8888
+      name: service-user
+      profile: default
+      fail-fast: true

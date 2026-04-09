@@ -1,0 +1,85 @@
+server:
+  port: 8070
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          "[/**]":
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+      routes:
+        - id: service-gestion-user
+          uri: lb://SERVICE-GESTION-USER
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=1
+
+        - id: service-gestion-projet
+          uri: lb://SERVICE-GESTION-PROJET
+          predicates:
+            - Path=/api/projets/**
+          filters:
+            - StripPrefix=1
+
+        - id: service-gestion-chantier
+          uri: lb://SERVICE-GESTION-CHANTIER
+          predicates:
+            - Path=/api/chantiers/**
+          filters:
+            - StripPrefix=1
+
+        - id: service-materiau
+          uri: lb://SERVICE-MATERIAU
+          predicates:
+            - Path=/api/materiaux/**
+          filters:
+            - StripPrefix=1
+
+        - id: service-fournisseurs
+          uri: lb://SERVICE-FOURNISSEURS
+          predicates:
+            - Path=/api/fournisseurs/**
+          filters:
+            - StripPrefix=1
+
+        - id: service-gestion-incidents
+          uri: lb://SERVICE-GESTION-INCIDENTS
+          predicates:
+            - Path=/api/incidents/**
+          filters:
+            - StripPrefix=1
+
+        - id: service-notification
+          uri: lb://SERVICE-NOTIFICATION
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=1
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

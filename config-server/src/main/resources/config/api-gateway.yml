@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: service-materiau
+          uri: lb://service-materiau
+          predicates:
+            - Path=/materiau/**
+          filters:
+            - StripPrefix=1
+        - id: service-projet
+          uri: lb://service-gestion-projet
+          predicates:
+            - Path=/projet/**
+          filters:
+            - StripPrefix=1
+        - id: service-user
+          uri: lb://service-gestion-user
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+        - id: service-chantier
+          uri: lb://service-gestion-chantier
+          predicates:
+            - Path=/chantier/**
+          filters:
+            - StripPrefix=1
+        - id: service-incidents
+          uri: lb://service-gestion-incidents
+          predicates:
+            - Path=/incidents/**
+          filters:
+            - StripPrefix=1
+
+server:
+  port: 8070
+
+eureka:
+  client:
+    enabled: true
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always

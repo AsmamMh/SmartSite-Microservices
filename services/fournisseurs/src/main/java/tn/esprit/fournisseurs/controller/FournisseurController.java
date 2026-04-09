@@ -10,7 +10,7 @@ import tn.esprit.fournisseurs.service.FournisseurService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/fournisseurs")
+@RequestMapping("/fournisseurs")
 @RequiredArgsConstructor   // ← Lombok génère le constructeur automatiquement
 public class FournisseurController {
 
