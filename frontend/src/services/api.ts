@@ -102,11 +102,11 @@ export const fournisseursService = {
 };
 
 export const incidentsService = {
-  getAll: () => requestWithFallback('get', ['/incidents', '/api/incidents']),
-  getById: (id: number) => requestWithFallback('get', [`/incidents/${id}`, `/api/incidents/${id}`]),
-  create: (data: unknown) => requestWithFallback('post', ['/incidents', '/api/incidents'], data),
-  update: (id: number, data: unknown) => requestWithFallback('put', [`/incidents/${id}`, `/api/incidents/${id}`], data),
-  delete: (id: number) => requestWithFallback('delete', [`/incidents/${id}`, `/api/incidents/${id}`]),
+  getAll: () => requestWithFallback('get', ['/api/incidents']),
+  getById: (id: number) => requestWithFallback('get', [`/api/incidents/${id}`]),
+  create: (data: unknown) => requestWithFallback('post', ['/api/incidents'], data),
+  update: (id: number, data: unknown) => requestWithFallback('put', [`/api/incidents/${id}`], data),
+  delete: (id: number) => requestWithFallback('delete', [`/api/incidents/${id}`]),
 };
 
 export const planningService = {

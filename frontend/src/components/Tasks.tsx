@@ -232,7 +232,7 @@ const Tasks: React.FC = () => {
           value={selectedProjectId}
           onChange={(e) => setSelectedProjectId(e.target.value ? Number(e.target.value) : '')}
         >
-          {projects.map((project) => (
+          {projects.map((project:any) => (
             <MenuItem key={project.id} value={project.id}>
               {project.nom}
             </MenuItem>
