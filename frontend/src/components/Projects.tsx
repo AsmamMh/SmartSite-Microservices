@@ -16,18 +16,23 @@ import {
   DialogActions,
   TextField,
   CircularProgress,
+  MenuItem,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { projetService } from '../services/api';
 
 interface Project {
-  id: string | number;
-  name: string;
+  id: number;
+  nom: string;
   description: string;
-  status: string;
-  startDate: string;
-  endDate: string;
+  client?: string;
+  budget?: number;
+  statut?: string;
+  dateDebut?: string;
+  dateFin?: string;
 }
+
+const statuts = ['EN_ATTENTE', 'EN_COURS', 'TERMINE', 'ANNULE'];
 
 const Projects: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -35,11 +40,13 @@ const Projects: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
+    nom: '',
     description: '',
-    status: '',
-    startDate: '',
-    endDate: '',
+    client: '',
+    budget: '',
+    statut: 'EN_ATTENTE',
+    dateDebut: '',
+    dateFin: '',
   });
 
   useEffect(() => {
@@ -49,7 +56,7 @@ const Projects: React.FC = () => {
   const fetchProjects = async () => {
     try {
       const response = await projetService.getAll();
-      setProjects(response.data);
+      setProjects(response.data as Project[]);
     } catch (error) {
       console.error('Error fetching projects:', error);
     } finally {
@@ -59,10 +66,20 @@ const Projects: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
+      const payload = {
+        nom: formData.nom,
+        description: formData.description || null,
+        client: formData.client || null,
+        budget: formData.budget ? Number(formData.budget) : null,
+        statut: formData.statut || null,
+        dateDebut: formData.dateDebut || null,
+        dateFin: formData.dateFin || null,
+      };
+
       if (editingProject) {
-        await projetService.update(Number(editingProject.id), formData);
+        await projetService.update(Number(editingProject.id), payload);
       } else {
-        await projetService.create(formData);
+        await projetService.create(payload);
       }
       fetchProjects();
       handleCloseDialog();
@@ -74,11 +91,13 @@ const Projects: React.FC = () => {
   const handleEdit = (project: Project) => {
     setEditingProject(project);
     setFormData({
-      name: project.name,
-      description: project.description,
-      status: project.status,
-      startDate: project.startDate,
-      endDate: project.endDate,
+      nom: project.nom,
+      description: project.description || '',
+      client: project.client || '',
+      budget: project.budget != null ? String(project.budget) : '',
+      statut: project.statut || 'EN_ATTENTE',
+      dateDebut: project.dateDebut || '',
+      dateFin: project.dateFin || '',
     });
     setOpenDialog(true);
   };
@@ -97,7 +116,7 @@ const Projects: React.FC = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingProject(null);
-    setFormData({ name: '', description: '', status: '', startDate: '', endDate: '' });
+    setFormData({ nom: '', description: '', client: '', budget: '', statut: 'EN_ATTENTE', dateDebut: '', dateFin: '' });
   };
 
   if (loading) {
@@ -138,11 +157,11 @@ const Projects: React.FC = () => {
             {projects.map((project) => (
               <TableRow key={project.id}>
                 <TableCell>{project.id}</TableCell>
-                <TableCell>{project.name}</TableCell>
+                <TableCell>{project.nom}</TableCell>
                 <TableCell>{project.description}</TableCell>
-                <TableCell>{project.status}</TableCell>
-                <TableCell>{new Date(project.startDate).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(project.endDate).toLocaleDateString()}</TableCell>
+                <TableCell>{project.statut || '-'}</TableCell>
+                <TableCell>{project.dateDebut ? new Date(project.dateDebut).toLocaleDateString() : '-'}</TableCell>
+                <TableCell>{project.dateFin ? new Date(project.dateFin).toLocaleDateString() : '-'}</TableCell>
                 <TableCell>
                   <Button
                     size="small"
@@ -176,8 +195,8 @@ const Projects: React.FC = () => {
             margin="dense"
             label="Nom du projet"
             fullWidth
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.nom}
+            onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
           />
           <TextField
             margin="dense"
@@ -190,26 +209,50 @@ const Projects: React.FC = () => {
           />
           <TextField
             margin="dense"
+            label="Client"
+            fullWidth
+            value={formData.client}
+            onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Budget"
+            type="number"
+            fullWidth
+            value={formData.budget}
+            onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+          />
+          <TextField
+            margin="dense"
             label="Statut"
             fullWidth
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-          />
+            select
+            value={formData.statut}
+            onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
+          >
+            {statuts.map((statut) => (
+              <MenuItem key={statut} value={statut}>
+                {statut}
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField
             margin="dense"
             label="Date de début"
             type="date"
             fullWidth
-            value={formData.startDate}
-            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+            InputLabelProps={{ shrink: true }}
+            value={formData.dateDebut}
+            onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
           />
           <TextField
             margin="dense"
             label="Date de fin"
             type="date"
             fullWidth
-            value={formData.endDate}
-            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+            InputLabelProps={{ shrink: true }}
+            value={formData.dateFin}
+            onChange={(e) => setFormData({ ...formData, dateFin: e.target.value })}
           />
         </DialogContent>
         <DialogActions>
