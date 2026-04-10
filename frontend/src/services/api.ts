@@ -117,6 +117,18 @@ export const planningService = {
   delete: (id: number) => requestWithFallback('delete', [`/api/project/${id}`]),
 };
 
+export const taskService = {
+  getByProject: (projectId: number) => requestWithFallback('get', [`/api/task/project/${projectId}`]),
+  getById: (id: number) => requestWithFallback('get', [`/api/task/${id}`]),
+  create: (projectId: number, data: unknown) => requestWithFallback('post', [`/api/task/${projectId}`], data),
+  delete: (id: number) => requestWithFallback('delete', [`/api/task/${id}`]),
+};
+
+export const taskAssignService = {
+  create: (taskId: number, data: unknown) => requestWithFallback('post', [`/api/taskassigne/${taskId}`], data),
+  getByTask: (taskId: number) => requestWithFallback('get', [`/api/taskassigne/${taskId}`]),
+};
+
 export const notificationService = {
   getAll: () => requestWithFallback('get', ['/api/notifications']),
   getById: (id: number) => requestWithFallback('get', [`/api/notifications/${id}`]),

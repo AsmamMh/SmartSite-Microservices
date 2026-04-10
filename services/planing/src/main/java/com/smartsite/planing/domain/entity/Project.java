@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,6 +44,7 @@ public class Project {
     private LocalDate actualStart;
     private LocalDate acctualEnd;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "project",cascade =  CascadeType.ALL)
     private List<TaskAssigne> assignments = new ArrayList<>();
     
@@ -52,6 +55,7 @@ public class Project {
     private Long clientId;
     private Long responsableId;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "project")
     private List<Task> tasks = new ArrayList<>();
 }

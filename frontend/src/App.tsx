@@ -26,6 +26,7 @@ import {
   LocalShipping as ShippingIcon,
   Notifications as NotificationsIcon,
   CalendarToday as CalendarIcon,
+  Assignment as TaskIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 
@@ -38,6 +39,7 @@ import Incidents from './components/Incidents';
 import Fournisseurs from './components/Fournisseurs';
 import Notifications from './components/Notifications';
 import Planning from './components/Planning';
+import Tasks from './components/Tasks';
 import keycloak, { getUserDisplayName, initKeycloak } from './auth/keycloak';
 
 const theme = createTheme({
@@ -63,6 +65,7 @@ const menuItems = [
   { text: 'Fournisseurs', icon: <ShippingIcon />, path: '/fournisseurs' },
   { text: 'Notifications', icon: <NotificationsIcon />, path: '/notifications' },
   { text: 'Planning', icon: <CalendarIcon />, path: '/planning' },
+  { text: 'Tâches', icon: <TaskIcon />, path: '/tasks' },
 ];
 
 
@@ -167,6 +170,7 @@ function App() {
               <Route path="/fournisseurs" element={<Fournisseurs />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/planning" element={<Planning />} />
+              <Route path="/tasks" element={<Tasks />} />
             </Routes>
           </Box>
         </Box>
