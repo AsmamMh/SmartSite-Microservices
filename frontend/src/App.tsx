@@ -27,7 +27,6 @@ import {
   Notifications as NotificationsIcon,
   CalendarToday as CalendarIcon,
   Logout as LogoutIcon,
-  Token,
 } from '@mui/icons-material';
 
 import Dashboard from './components/Dashboard';
@@ -40,8 +39,6 @@ import Fournisseurs from './components/Fournisseurs';
 import Notifications from './components/Notifications';
 import Planning from './components/Planning';
 import keycloak, { getUserDisplayName, initKeycloak } from './auth/keycloak';
-
-import { ReactKeycloakProvider } from '@react-keycloak/web';
 
 const theme = createTheme({
   palette: {
@@ -114,7 +111,6 @@ function App() {
   };
 
   return (
-    <ReactKeycloakProvider authClient={keycloak}>
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
@@ -122,13 +118,13 @@ function App() {
           <AppBar position="fixed" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
             <Toolbar>
               <Typography variant="h6" noWrap component="div">
-                SmartSite - Gestion de Chantiers{keycloak.token}
+                SmartSite - Gestion de Chantiers
               </Typography>
               <Box sx={{ flexGrow: 1 }} />
               <Typography variant="body2" sx={{ mr: 2 }}>
                 {getUserDisplayName()}
                 {keycloak.hasRealmRole('admin') && ' (Admin)'}
-                
+                {keycloak.hasRealmRole('manager') && ' (Manager)'}
               </Typography>
               <Button color="inherit" startIcon={<LogoutIcon />} onClick={handleLogout}>
                 Déconnexion
@@ -175,7 +171,7 @@ function App() {
           </Box>
         </Box>
       </Router>
-    </ThemeProvider></ReactKeycloakProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1,13 +1,18 @@
 import Keycloak from "keycloak-js";
 import { registerTokenSupplier } from "../services/api";
 
+const KEYCLOAK_URL =  "http://localhost:8080";
+const KEYCLOAK_REALM =  "smartsite";
+const KEYCLOAK_CLIENT_ID =  "site-id";
+
 const keycloak = new Keycloak({
-  url: "http://localhost:8080",
-  realm: "smartsite",
-  clientId: "site-id",
+  url: KEYCLOAK_URL,
+  realm: KEYCLOAK_REALM,
+  clientId: KEYCLOAK_CLIENT_ID,
 });
 
 let initialized = false;
+let initPromise: Promise<boolean> | null = null;
 
 /**
  * Token provider for API layer
@@ -37,26 +42,44 @@ export const initKeycloak = async (): Promise<boolean> => {
     return !!keycloak.authenticated;
   }
 
-  const authenticated = await keycloak.init({
-    onLoad: "login-required",
-    checkLoginIframe: false,
-    pkceMethod: "S256",
-    redirectUri: window.location.origin + "/",
-  });
+  if (initPromise) {
+    return initPromise;
+  }
 
-  initialized = true;
+  initPromise = keycloak
+    .init({
+      onLoad: "login-required",
+      checkLoginIframe: false,
+      pkceMethod: "S256",
+      redirectUri: window.location.origin + "/",
+    })
+    .then((authenticated) => {
+      initialized = true;
 
-  // auto refresh when token expires
-  keycloak.onTokenExpired = () => {
-    keycloak
-      .updateToken(60)
-      .catch((error) => {
-        console.error("Session expired, redirecting to login", error);
-        keycloak.login();
+      // auto refresh when token expires
+      keycloak.onTokenExpired = () => {
+        keycloak
+          .updateToken(60)
+          .catch((error) => {
+            console.error("Session expired, redirecting to login", error);
+            keycloak.login();
+          });
+      };
+
+      return authenticated;
+    })
+    .catch((error) => {
+      initPromise = null;
+      console.error("Keycloak init failed", {
+        keycloakUrl: KEYCLOAK_URL,
+        realm: KEYCLOAK_REALM,
+        clientId: KEYCLOAK_CLIENT_ID,
+        error,
       });
-  };
+      throw error;
+    });
 
-  return authenticated;
+  return initPromise;
 };
 
 /**
@@ -66,10 +89,26 @@ export const getUserDisplayName = (): string => {
   const parsed = keycloak.tokenParsed as any;
 
   const username = parsed?.preferred_username;
+  const fullName = parsed?.name;
+  const givenName = parsed?.given_name;
+  const familyName = parsed?.family_name;
   const email = parsed?.email;
 
   if (typeof username === "string" && username.trim()) {
     return username;
+  }
+
+  if (typeof fullName === "string" && fullName.trim()) {
+    return fullName;
+  }
+
+  const composedName = [givenName, familyName]
+    .filter((part: unknown): part is string => typeof part === "string" && part.trim().length > 0)
+    .join(" ")
+    .trim();
+
+  if (composedName) {
+    return composedName;
   }
 
   if (typeof email === "string" && email.trim()) {
