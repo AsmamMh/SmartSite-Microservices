@@ -4,6 +4,7 @@ import { registerTokenSupplier } from "../services/api";
 const KEYCLOAK_URL =  "http://localhost:8080";
 const KEYCLOAK_REALM =  "smartsite";
 const KEYCLOAK_CLIENT_ID =  "site-id";
+const INIT_RETRY_FLAG = "kc-init-retry-once";
 
 const keycloak = new Keycloak({
   url: KEYCLOAK_URL,
@@ -13,6 +14,28 @@ const keycloak = new Keycloak({
 
 let initialized = false;
 let initPromise: Promise<boolean> | null = null;
+
+const hasAuthCallbackParams = (): boolean => {
+  const url = new URL(window.location.href);
+  const keys = ["code", "state", "session_state", "error", "error_description"];
+  const hasQueryParams = keys.some((key) => url.searchParams.has(key));
+  const hash = url.hash.replace(/^#/, "");
+  const hashParams = new URLSearchParams(hash);
+  const hasHashParams = keys.some((key) => hashParams.has(key));
+
+  return hasQueryParams || hasHashParams;
+};
+
+const clearAuthCallbackParams = () => {
+  const url = new URL(window.location.href);
+  const keys = ["code", "state", "session_state", "error", "error_description"];
+
+  keys.forEach((key) => url.searchParams.delete(key));
+  url.hash = "";
+
+  const cleanUrl = `${url.origin}${url.pathname}${url.search}`;
+  window.history.replaceState({}, document.title, cleanUrl);
+};
 
 /**
  * Token provider for API layer
@@ -51,10 +74,13 @@ export const initKeycloak = async (): Promise<boolean> => {
       onLoad: "login-required",
       checkLoginIframe: false,
       pkceMethod: "S256",
+      flow: "standard",
+      responseMode: "query",
       redirectUri: window.location.origin + "/",
     })
     .then((authenticated) => {
       initialized = true;
+      sessionStorage.removeItem(INIT_RETRY_FLAG);
 
       // auto refresh when token expires
       keycloak.onTokenExpired = () => {
@@ -70,6 +96,14 @@ export const initKeycloak = async (): Promise<boolean> => {
     })
     .catch((error) => {
       initPromise = null;
+
+      // Recover once from stale/invalid auth callback state then force a fresh login.
+      if (hasAuthCallbackParams() && sessionStorage.getItem(INIT_RETRY_FLAG) !== "1") {
+        sessionStorage.setItem(INIT_RETRY_FLAG, "1");
+        clearAuthCallbackParams();
+        return keycloak.login({ redirectUri: window.location.origin + "/" }).then(() => false);
+      }
+
       console.error("Keycloak init failed", {
         keycloakUrl: KEYCLOAK_URL,
         realm: KEYCLOAK_REALM,

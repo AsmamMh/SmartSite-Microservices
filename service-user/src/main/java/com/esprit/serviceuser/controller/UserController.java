@@ -1,12 +1,13 @@
 package com.esprit.serviceuser.controller;
 
-import com.esprit.serviceuser.entity.User;
+import com.esprit.serviceuser.dto.UserDto;
+import com.esprit.serviceuser.dto.UserUpsertRequest;
 import com.esprit.serviceuser.entity.Role;
 import com.esprit.serviceuser.service.UserService;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,51 +20,51 @@ public class UserController {
     private UserService userService;
 
     @PostMapping
-    public ResponseEntity<?> createUser(@RequestBody User user) {
+    public ResponseEntity<?> createUser(@RequestBody UserUpsertRequest user) {
         try {
-            User savedUser = userService.createUser(user);
+            UserDto savedUser = userService.createUser(user);
             return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
-        } catch (DataIntegrityViolationException ex) {
+        } catch (HttpClientErrorException.Conflict ex) {
             return new ResponseEntity<>("Email already exists", HttpStatus.CONFLICT);
         }
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
+    public ResponseEntity<List<UserDto>> getAllUsers() {
+        List<UserDto> users = userService.getAllUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable String id) {
         return userService.getUserById(id)
                 .map(user -> new ResponseEntity<>(user, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping("/email/{email}")
-    public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
+    public ResponseEntity<UserDto> getUserByEmail(@PathVariable String email) {
         return userService.getUserByEmail(email)
                 .map(user -> new ResponseEntity<>(user, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping("/role/{role}")
-    public ResponseEntity<List<User>> getUsersByRole(@PathVariable Role role) {
-        List<User> users = userService.getUsersByRole(role);
+    public ResponseEntity<List<UserDto>> getUsersByRole(@PathVariable Role role) {
+        List<UserDto> users = userService.getUsersByRole(role);
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
     @GetMapping("/actifs")
-    public ResponseEntity<List<User>> getActiveUsers() {
-        List<User> users = userService.getActiveUsers();
+    public ResponseEntity<List<UserDto>> getActiveUsers() {
+        List<UserDto> users = userService.getActiveUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+    public ResponseEntity<UserDto> updateUser(@PathVariable String id, @RequestBody UserUpsertRequest user) {
         try {
-            User updatedUser = userService.updateUser(id, user);
+            UserDto updatedUser = userService.updateUser(id, user);
             return new ResponseEntity<>(updatedUser, HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -71,7 +72,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

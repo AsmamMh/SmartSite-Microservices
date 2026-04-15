@@ -27,7 +27,7 @@ interface PlanningProject {
 }
 
 interface User {
-  id: number;
+  id: string;
   nom: string;
   prenom: string;
   email: string;
@@ -192,7 +192,7 @@ const Tasks: React.FC = () => {
 
     try {
       await taskAssignService.create(activeTaskId, {
-        workerId: Number(assignForm.workerId),
+        workerId: assignForm.workerId,
         teamId: assignForm.teamId ? Number(assignForm.teamId) : null,
         assignedHOurs: assignForm.assignedHOurs ? Number(assignForm.assignedHOurs) : null,
         assignedStatus: assignForm.assignedStatus,

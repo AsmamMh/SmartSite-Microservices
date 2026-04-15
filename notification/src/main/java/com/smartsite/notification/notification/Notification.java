@@ -21,10 +21,10 @@ public class Notification {
  @Id
  @GeneratedValue(strategy = GenerationType.IDENTITY)
  private Long id;
- private String NotificationType;
- private String Title;
- private String Description;
- private Date ReceivedDate;
- private Long Receiver;
- private boolean isRead;
+ private String notificationType;
+ private String title;
+ private String description;
+ private Date receivedDate;
+ private String receiver;
+ private boolean read;
 }

@@ -63,10 +63,10 @@ const requestWithFallback = async <T>(
 
 export const userService = {
   getAll: () => requestWithFallback('get', ['/api/users']),
-  getById: (id: number) => requestWithFallback('get', [`/api/users/${id}`]),
+  getById: (id: string) => requestWithFallback('get', [`/api/users/${id}`]),
   create: (data: unknown) => requestWithFallback('post', ['/api/users'], data),
-  update: (id: number, data: unknown) => requestWithFallback('put', [`/api/users/${id}`], data),
-  delete: (id: number) => requestWithFallback('delete', [`/api/users/${id}`]),
+  update: (id: string, data: unknown) => requestWithFallback('put', [`/api/users/${id}`], data),
+  delete: (id: string) => requestWithFallback('delete', [`/api/users/${id}`]),
 };
 
 export const projetService = {
@@ -131,6 +131,7 @@ export const taskAssignService = {
 
 export const notificationService = {
   getAll: () => requestWithFallback('get', ['/api/notifications']),
+  getByReceiver: (receiver: string) => requestWithFallback('get', [`/api/notifications/by-receiver?receiver=${encodeURIComponent(receiver)}`]),
   getById: (id: number) => requestWithFallback('get', [`/api/notifications/${id}`]),
   create: (data: unknown) => requestWithFallback('post', ['/api/notifications'], data),
   update: (id: number, data: unknown) => requestWithFallback('put', [`/api/notifications/${id}`], data),

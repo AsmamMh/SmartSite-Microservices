@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/notifications")
-@CrossOrigin(origins = "*")
+
 public class NotificationController {
     private final NotificationRepositorry notificationRepository;
 
@@ -32,6 +32,11 @@ public class NotificationController {
     @GetMapping
     public List<Notification> getMethodName() {
         return this.notificationRepository.findAll();
+    }
+
+    @GetMapping("/by-receiver")
+    public List<Notification> getByReceiver(@RequestParam String receiver) {
+        return this.notificationRepository.findByReceiver(receiver);
     }
     
     @PostMapping("/task-assignment")

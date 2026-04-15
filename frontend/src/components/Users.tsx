@@ -22,7 +22,7 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/ico
 import { userService } from '../services/api';
 
 interface User {
-  id: number;
+  id: string;
   nom: string;
   prenom: string;
   email: string;
@@ -32,6 +32,17 @@ interface User {
   actif: boolean;
 }
 
+interface UserFormData {
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  poste: string;
+  role: string;
+  actif: boolean;
+  password: string;
+}
+
 const roles = ['ADMIN', 'CHEF_CHANTIER', 'OUVRIER', 'TECHNICIEN', 'RESPONSABLE'];
 
 const Users: React.FC = () => {
@@ -39,7 +50,7 @@ const Users: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UserFormData>({
     nom: '',
     prenom: '',
     email: '',
@@ -47,6 +58,7 @@ const Users: React.FC = () => {
     poste: '',
     role: '',
     actif: true,
+    password: '',
   });
 
   useEffect(() => {
@@ -67,10 +79,21 @@ const Users: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
+      const payload = {
+        nom: formData.nom,
+        prenom: formData.prenom,
+        email: formData.email,
+        telephone: formData.telephone,
+        poste: formData.poste,
+        role: formData.role,
+        actif: formData.actif,
+        password: formData.password || undefined,
+      };
+
       if (editingUser) {
-        await userService.update(Number(editingUser.id), formData);
+        await userService.update(editingUser.id, payload);
       } else {
-        await userService.create(formData);
+        await userService.create(payload);
       }
       fetchUsers();
       handleCloseDialog();
@@ -90,14 +113,15 @@ const Users: React.FC = () => {
       poste: user.poste || '',
       role: user.role,
       actif: user.actif,
+      password: '',
     });
     setOpenDialog(true);
   };
 
-  const handleDelete = async (id: string | number) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
       try {
-        await userService.delete(id as number);
+        await userService.delete(id);
         fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
@@ -108,7 +132,7 @@ const Users: React.FC = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingUser(null);
-    setFormData({ nom: '', prenom: '', email: '', telephone: '', poste: '', role: '', actif: true });
+    setFormData({ nom: '', prenom: '', email: '', telephone: '', poste: '', role: '', actif: true, password: '' });
   };
 
   if (loading) {
@@ -235,6 +259,26 @@ const Users: React.FC = () => {
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            margin="dense"
+            label="Actif"
+            fullWidth
+            select
+            value={formData.actif ? 'true' : 'false'}
+            onChange={(e) => setFormData({ ...formData, actif: e.target.value === 'true' })}
+          >
+            <MenuItem value="true">Oui</MenuItem>
+            <MenuItem value="false">Non</MenuItem>
+          </TextField>
+          <TextField
+            margin="dense"
+            label={editingUser ? 'Nouveau mot de passe (optionnel)' : 'Mot de passe'}
+            type="password"
+            fullWidth
+            required={!editingUser}
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Annuler</Button>

@@ -13,15 +13,16 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { notificationService } from '../services/api';
+import keycloak from '../auth/keycloak';
 
 interface Notification {
-  id: string;
+  id: number;
   title: string;
-  message: string;
-  type: string;
+  description: string;
+  notificationType: string;
   read: boolean;
-  createdAt: string;
-  userId: string;
+  receivedDate: string;
+  receiver: string;
 }
 
 const Notifications: React.FC = () => {
@@ -34,8 +35,12 @@ const Notifications: React.FC = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await notificationService.getAll();
-      setNotifications(response.data);
+      const currentUserId = (keycloak.tokenParsed as any)?.sub as string | undefined;
+      const response = currentUserId
+        ? await notificationService.getByReceiver(currentUserId)
+        : await notificationService.getAll();
+      console.log('Fetched notifications:', response.data);
+      setNotifications(response.data as Notification[]);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -43,20 +48,20 @@ const Notifications: React.FC = () => {
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'info':
-        return 'info';
-      case 'success':
-        return 'success';
-      case 'warning':
-        return 'warning';
-      case 'error':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+  // const getTypeColor = (type: string) => {
+  //   switch (type.toLowerCase()) {
+  //     case 'info':
+  //       return 'info';
+  //     case 'success':
+  //       return 'success';
+  //     case 'warning':
+  //       return 'warning';
+  //     case 'error':
+  //       return 'error';
+  //     default:
+  //       return 'default';
+  //   }
+  // };
 
   if (loading) {
     return (
@@ -77,10 +82,10 @@ const Notifications: React.FC = () => {
               <TableCell>ID</TableCell>
               <TableCell>Titre</TableCell>
               <TableCell>Message</TableCell>
-              <TableCell>Type</TableCell>
+           
               <TableCell>Statut</TableCell>
-              <TableCell>Date de création</TableCell>
-              <TableCell>ID Utilisateur</TableCell>
+              <TableCell>Date de réception</TableCell>
+            
             </TableRow>
           </TableHead>
           <TableBody>
@@ -88,14 +93,8 @@ const Notifications: React.FC = () => {
               <TableRow key={notification.id}>
                 <TableCell>{notification.id}</TableCell>
                 <TableCell>{notification.title}</TableCell>
-                <TableCell>{notification.message}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={notification.type}
-                    color={getTypeColor(notification.type) as any}
-                    size="small"
-                  />
-                </TableCell>
+                <TableCell>{notification.description}</TableCell>
+                
                 <TableCell>
                   <Chip
                     label={notification.read ? 'Lue' : 'Non lue'}
@@ -103,10 +102,10 @@ const Notifications: React.FC = () => {
                     size="small"
                   />
                 </TableCell>
-                <TableCell>{new Date(notification.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell>{notification.userId}</TableCell>
+                <TableCell>{new Date(notification.receivedDate).toLocaleDateString()}</TableCell>
+                {/* <TableCell>{notification.receiver}</TableCell> */}
               </TableRow>
-            ))}
+            ))} 
           </TableBody>
         </Table>
       </TableContainer>
