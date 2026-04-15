@@ -38,10 +38,10 @@ services:
     image: quay.io/keycloak/keycloak:26.3.1
     container_name: keycloak
     restart: unless-stopped
-    command: start-dev
+    command: start-dev --import-realm
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_DB: postgres
       KC_DB_URL_HOST: postgres-smartsite
       KC_DB_URL_PORT: 5432
@@ -49,11 +49,16 @@ services:
       KC_DB_USERNAME: smartsite
       KC_DB_PASSWORD: smartsite
       KC_HTTP_PORT: 8080
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_PROXY: edge
     depends_on:
       postgres-smartsite:
         condition: service_healthy
     ports:
       - "8080:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
 
   postgres:
     image: postgres:16
@@ -90,6 +95,54 @@ services:
       timeout: 5s
       retries: 5
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+    container_name: elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.14.3
+    container_name: logstash
+    restart: unless-stopped
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "5044:5044"
+      - "5000:5000"
+      - "9600:9600"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.14.3
+    container_name: kibana
+    restart: unless-stopped
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      XPACK_SECURITY_ENABLED: "false"
+    ports:
+      - "5601:5601"
+
   config-server:
     build:
       context: ./config-server
@@ -121,6 +174,8 @@ services:
     environment:
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      KEYCLOAK_AUTH_JWK_SET_URI: http://keycloak:8080/realms/smartsite/protocol/openid-connect/certs
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/smartsite
     ports:
       - "8070:8070"
 
@@ -189,6 +244,8 @@ services:
     depends_on:
       postgres-smartsite:
         condition: service_healthy
+      logstash:
+        condition: service_started
       config-server:
         condition: service_started
       eureka-server:
@@ -198,6 +255,12 @@ services:
     environment:
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_REALM: smartsite
+      KEYCLOAK_ADMIN_REALM: master
+      KEYCLOAK_ADMIN_CLIENT_ID: admin-cli
+      KEYCLOAK_ADMIN_USERNAME: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
       PLANING_DB_URL: jdbc:postgresql://postgres-smartsite:5432/smartsite
       PLANING_DB_USERNAME: smartsite
       PLANING_DB_PASSWORD: smartsite
@@ -205,8 +268,125 @@ services:
       SPRING_DATASOURCE_USERNAME: smartsite
       SPRING_DATASOURCE_PASSWORD: smartsite
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      LOGGING_LOGSTASH_HOST: logstash
+      LOGGING_LOGSTASH_PORT: 5000
     ports:
       - "8082:8082"
+
+  chantier:
+    build:
+      context: ./chantier
+    container_name: chantier
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASSWORD: chedly
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/chedlyRebai4twin5_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: chedly
+    ports:
+      - "8089:8089"
+
+  service-projet:
+    build:
+      context: ./service-projet
+    container_name: service-projet
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASSWORD: chedly
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/chedlyRebai4twin5_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: chedly
+    ports:
+      - "8083:8083"
+
+  service-materiau:
+    build:
+      context: ./service-materiau
+    container_name: service-materiau
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASSWORD: chedly
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/chedlyRebai4twin5_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: chedly
+    ports:
+      - "8086:8086"
+
+  fournisseur:
+    build:
+      context: ./fournisseur
+    container_name: fournisseur
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASSWORD: chedly
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gestion_chantier?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: chedly
+    ports:
+      - "8084:8081"
+
+  fournisseurs:
+    build:
+      context: ./fournisseurs
+    container_name: fournisseurs
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASSWORD: chedly
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/chedlyRebai4twin5_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: chedly
+    ports:
+      - "8085:8081"
 
   frontend:
     build:
@@ -226,4 +406,6 @@ volumes:
   rabbitmq-lib:
     driver: local
   rabbitmq-log:
+    driver: local
+  elasticsearch-data:
     driver: local

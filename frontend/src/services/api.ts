@@ -1,6 +1,6 @@
 import axios, { AxiosResponse, Method } from 'axios';
 
-const API_BASE_URL =  'http://localhost:8070';
+const API_BASE_URL = '';
 
 let tokenSupplier: (() => Promise<string | undefined>) | null = null;
 
