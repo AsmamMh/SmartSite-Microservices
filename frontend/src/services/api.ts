@@ -1,6 +1,6 @@
 import axios, { AxiosResponse, Method } from 'axios';
 
-const API_BASE_URL =  'http://localhost:8070';
+const API_BASE_URL = 'http://localhost:8086'; // Changé de 8070 à 8086 (port de service-materiau)
 
 let tokenSupplier: (() => Promise<string | undefined>) | null = null;
 
@@ -15,6 +15,7 @@ const api = axios.create({
   },
 });
 
+// Interceptor pour ajouter le token JWT (Keycloak)
 api.interceptors.request.use(async (config) => {
   if (tokenSupplier) {
     const token = await tokenSupplier();
@@ -25,7 +26,6 @@ api.interceptors.request.use(async (config) => {
       } as typeof config.headers;
     }
   }
-
   return config;
 });
 
@@ -33,15 +33,14 @@ const shouldTryFallback = (error: unknown): boolean => {
   if (!axios.isAxiosError(error)) {
     return false;
   }
-
   const status = error.response?.status;
   return status === 404 || status === 502 || status === 503;
 };
 
 const requestWithFallback = async <T>(
-  method: Method,
-  paths: string[],
-  data?: unknown
+    method: Method,
+    paths: string[],
+    data?: unknown
 ): Promise<AxiosResponse<T>> => {
   let lastError: unknown;
 
@@ -57,8 +56,94 @@ const requestWithFallback = async <T>(
       }
     }
   }
-
   throw lastError;
+};
+
+// Types pour Matériau
+export interface Materiau {
+  id: number;
+  nom: string;
+  localisation: string;
+  unite: string;
+  quantiteStock: number;
+  seuilAlerte: number;
+  coutUnitaire: number;
+  actif: boolean;
+  dateCreation: string;
+}
+
+export interface MouvementStock {
+  id: number;
+  materiau: Materiau;
+  type: 'ENTREE' | 'SORTIE';
+  quantite: number;
+  commentaire: string;
+  dateMouvement: string;
+}
+
+export interface ChantierResponse {
+  id: number;
+  nom: string;
+  description: string;
+}
+
+export interface PredictionRequest {
+  materiauId: number;
+  heures: number;
+}
+
+export interface PredictionResponse {
+  materiau: string;
+  stockActuel: number;
+  consommationParHeure: number;
+  heuresPrediction: number;
+  prediction: number;
+  unite: string;
+  alerte: string;
+}
+
+export interface Statistiques {
+  nombreMateriaux: number;
+  valeurStockTotal: number;
+  stockFaible: number;
+}
+
+// ============================================
+// SERVICE MATÉRIAU (COMPLET)
+// ============================================
+export const materiauService = {
+  // CRUD
+  getAll: () => requestWithFallback<Materiau[]>('get', ['/materiaux']),
+  getById: (id: number) => requestWithFallback<Materiau>('get', [`/materiaux/${id}`]),
+  create: (data: Partial<Materiau>) => requestWithFallback<Materiau>('post', ['/materiaux'], data),
+  update: (id: number, data: Partial<Materiau>) =>
+      requestWithFallback<Materiau>('put', [`/materiaux/${id}`], data),
+  delete: (id: number) => requestWithFallback<void>('delete', [`/materiaux/${id}`]),
+
+  // Gestion Stock
+  entreeStock: (id: number, quantite: number, commentaire?: string) =>
+      requestWithFallback<MouvementStock>('post', [`/materiaux/${id}/entree?quantite=${quantite}&commentaire=${commentaire || ''}`]),
+  sortieStock: (id: number, quantite: number, commentaire?: string) =>
+      requestWithFallback<MouvementStock>('post', [`/materiaux/${id}/sortie?quantite=${quantite}&commentaire=${commentaire || ''}`]),
+
+  // Métiers Avancés
+  getStockFaible: () => requestWithFallback<Materiau[]>('get', ['/materiaux/stock-faible']),
+  getStatistiques: () => requestWithFallback<Statistiques>('get', ['/materiaux/statistiques']),
+  search: (keyword: string) =>
+      requestWithFallback<Materiau[]>('get', [`/materiaux/search?keyword=${keyword}`]),
+  filterByLocalisation: (localisation: string) =>
+      requestWithFallback<Materiau[]>('get', [`/materiaux/filter/localisation/${localisation}`]),
+  getHistorique: (id: number) =>
+      requestWithFallback<MouvementStock[]>('get', [`/materiaux/${id}/historique`]),
+
+  // Communication Chantier
+  getChantiers: () => requestWithFallback<ChantierResponse[]>('get', ['/materiaux/chantiers']),
+  testChantier: () =>
+      requestWithFallback<{ status: string; message: string; chantiersTrouves: number }>('get', ['/materiaux/test-chantier']),
+
+  // Prédiction IA
+  prediction: (request: PredictionRequest) =>
+      requestWithFallback<PredictionResponse>('post', ['/materiaux/prediction'], request),
 };
 
 export const userService = {
@@ -83,14 +168,6 @@ export const chantierService = {
   create: (data: unknown) => requestWithFallback('post', ['/api/chantiers'], data),
   update: (id: number, data: unknown) => requestWithFallback('put', [`/api/chantiers/${id}`], data),
   delete: (id: number) => requestWithFallback('delete', [`/api/chantiers/${id}`]),
-};
-
-export const materiauService = {
-  getAll: () => requestWithFallback('get', ['/materiaux', '/api/materiaux']),
-  getById: (id: number) => requestWithFallback('get', [`/materiaux/${id}`, `/api/materiaux/${id}`]),
-  create: (data: unknown) => requestWithFallback('post', ['/materiaux', '/api/materiaux'], data),
-  update: (id: number, data: unknown) => requestWithFallback('put', [`/materiaux/${id}`, `/api/materiaux/${id}`], data),
-  delete: (id: number) => requestWithFallback('delete', [`/materiaux/${id}`, `/api/materiaux/${id}`]),
 };
 
 export const fournisseursService = {
