@@ -14,7 +14,7 @@ public interface ITaskAssigne {
 
     List<TaskAssigne> getByTask(Long taskId);
 
-    List<TaskAssigne> getByWorker(Long workerId);
+    List<TaskAssigne> getByWorker(String workerId);
 
     List<TaskAssigne> getByTeam(Long teamId);
 

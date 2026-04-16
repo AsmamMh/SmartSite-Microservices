@@ -43,7 +43,7 @@ public class TaskAssigne {
     @JsonIgnore
     private Project project;
 
-    private Long workerId;
+    private String workerId;
     private Long teamId;
     
     @Column(precision = 4 , scale = 2)

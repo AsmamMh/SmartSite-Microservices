@@ -12,7 +12,7 @@ import lombok.Setter;
 public class TaskAssigneEvent {
     private Long projectId;
     private Long taskId;
-    private Long workerId;
+    private String workerId;
     private String title;
     private String description;
 

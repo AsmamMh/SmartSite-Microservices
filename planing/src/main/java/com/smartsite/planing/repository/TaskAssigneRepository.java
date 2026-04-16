@@ -11,7 +11,7 @@ public interface TaskAssigneRepository extends JpaRepository<TaskAssigne, Long> 
     
     List<TaskAssigne> findByTaskId(Long taskId);
 
-    List<TaskAssigne> findByWorkerId(Long workerId);
+    List<TaskAssigne> findByWorkerId(String workerId);
 
     List<TaskAssigne> findByTeamId(Long teamId);
 

@@ -1,0 +1,30 @@
+{
+  "realm": "smartsite",
+  "enabled": true,
+  "displayName": "SmartSite",
+  "clients": [
+    {
+      "clientId": "site-id",
+      "name": "SmartSite Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+      ],
+      "protocol": "openid-connect"
+    }
+  ],
+  "roles": {
+    "realm": []
+  },
+  "users": []
+}

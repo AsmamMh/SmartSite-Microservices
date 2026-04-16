@@ -76,7 +76,7 @@ public class TaskAssigneService implements ITaskAssigne {
     }
 
     @Override
-    public List<TaskAssigne> getByWorker(Long workerId) {
+    public List<TaskAssigne> getByWorker(String workerId) {
         return taskAssigneRepository.findByWorkerId(workerId);
     }
 

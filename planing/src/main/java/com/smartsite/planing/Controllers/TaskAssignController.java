@@ -9,7 +9,6 @@ import com.smartsite.planing.rabbitmq.TaskAssigneEvent;
 import com.smartsite.planing.service.ITaskAssigne;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/taskassigne")
-@CrossOrigin(origins = "*")
 public class TaskAssignController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskAssignController.class);

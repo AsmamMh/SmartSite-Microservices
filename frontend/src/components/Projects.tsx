@@ -19,7 +19,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { projetService } from '../services/api';
+import { projetService, userService } from '../services/api';
 
 interface Project {
   id: number;
@@ -32,10 +32,18 @@ interface Project {
   dateFin?: string;
 }
 
+interface UserOption {
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+}
+
 const statuts = ['EN_ATTENTE', 'EN_COURS', 'TERMINE', 'ANNULE'];
 
 const Projects: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -50,8 +58,24 @@ const Projects: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchProjects();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const [projectsResponse, usersResponse] = await Promise.all([
+        projetService.getAll(),
+        userService.getAll(),
+      ]);
+
+      setProjects(projectsResponse.data as Project[]);
+      setUsers(usersResponse.data as UserOption[]);
+    } catch (error) {
+      console.error('Error fetching projects/users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -209,11 +233,19 @@ const Projects: React.FC = () => {
           />
           <TextField
             margin="dense"
-            label="Client"
+            label="Client (Utilisateur)"
             fullWidth
+            select
             value={formData.client}
             onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-          />
+          >
+            <MenuItem value="">Aucun</MenuItem>
+            {users.map((user) => (
+              <MenuItem key={user.id} value={user.email}>
+                {`${user.prenom || ''} ${user.nom || ''}`.trim()} ({user.email})
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField
             margin="dense"
             label="Budget"
