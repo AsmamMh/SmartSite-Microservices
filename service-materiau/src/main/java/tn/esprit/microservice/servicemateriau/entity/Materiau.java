@@ -1,69 +1,41 @@
 package tn.esprit.microservice.servicemateriau.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.*;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "materiaux")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Materiau {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String nom;
-    private String pays;
+
+    private String localisation;  // Au lieu de "pays"
+
     private String unite;
-    private Double quantite;
-    private Double coutUnitaire;
 
-    public Long getId() {
-        return id;
-    }
+    private Double quantiteStock = 0.0;
 
-    public String getNom() {
-        return nom;
-    }
+    private Double seuilAlerte = 10.0;
 
-    public String getPays() {
-        return pays;
-    }
+    private Double coutUnitaire = 0.0;
 
-    public String getUnite() {
-        return unite;
-    }
+    private Boolean actif = true;
 
-    public Double getQuantite() {
-        return quantite;
-    }
+    private LocalDateTime dateCreation;
 
-    public Double getCoutUnitaire() {
-        return coutUnitaire;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
-
-    public void setPays(String pays) {
-        this.pays = pays;
-    }
-
-    public void setUnite(String unite) {
-        this.unite = unite;
-    }
-
-    public void setQuantite(Double quantite) {
-        this.quantite = quantite;
-    }
-
-    public void setCoutUnitaire(Double coutUnitaire) {
-        this.coutUnitaire = coutUnitaire;
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
     }
 }

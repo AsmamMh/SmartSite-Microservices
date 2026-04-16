@@ -7,7 +7,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(basePackages = "tn.esprit.microservice.servicemateriau.client")
 public class ServiceMateriauApplication {
 
     public static void main(String[] args) {
